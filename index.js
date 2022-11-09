@@ -48,13 +48,6 @@ async function run() {
         res.send(result);
     })
 
-    app.get('/blog', async (req, res) => {
-        const query = {};
-        const cursor = serviceCollection.find(query);
-        const result = await cursor.toArray();
-        res.send(result);
-    })
-
     app.get('/services', async (req, res) => {
         const query = {};
         const cursor = serviceCollection.find(query);
@@ -68,14 +61,21 @@ async function run() {
         res.send(result);
     })
 
-    app.get('/reviews/:id', async (req, res) => {
-        const id = req.params.id;
-        const query = { serviceId: id };
-        const cursor = reviewCollection.find(query).sort({ createdAt: -1 });
-        const reviews = await cursor.toArray();
-        res.send(reviews);
+    app.post('/services', async (req, res) => {
+        const service = req.body;
+        const result = await serviceCollection.insertOne(service);
+        res.send(result);
     })
 
+    // to insert reviews with time
+    app.post('/services/:id', async (req, res) => {
+        const review = req.body;
+        const data = { ...review, createdAt: new Date() };
+        const result = await reviewCollection.insertOne(data);
+        res.send(result);
+    })
+
+    // load my reviews
     app.get('/MyReviews', verifyJWT, async (req, res) => {
         const decoded = req.decoded;
         if (decoded.email !== req.query.email) {
@@ -89,6 +89,15 @@ async function run() {
             }
         }
         const cursor = reviewCollection.find(query);
+        const reviews = await cursor.toArray();
+        res.send(reviews);
+    })
+
+    // load and sort reviews on service details page
+    app.get('/reviews/:id', async (req, res) => {
+        const id = req.params.id;
+        const query = { serviceId: id };
+        const cursor = reviewCollection.find(query).sort({ createdAt: -1 });
         const reviews = await cursor.toArray();
         res.send(reviews);
     })
@@ -117,28 +126,12 @@ async function run() {
         res.send(result);
     })
 
-
-    app.post('/services', async (req, res) => {
-        const service = req.body;
-        const result = await serviceCollection.insertOne(service);
-        res.send(result);
-    })
-
-    app.post('/services/:id', async (req, res) => {
-        const review = req.body;
-        const data = { ...review, createdAt: new Date() };
-        const result = await reviewCollection.insertOne(data);
-        res.send(result);
-    })
-
     app.delete('/reviews/:id', async (req, res) => {
         const id = req.params.id;
         const query = { _id: ObjectId(id) };
         const result = await reviewCollection.deleteOne(query);
         res.send(result);
     })
-
-
 }
 
 run().catch(err => console.log(err))
