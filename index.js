@@ -85,10 +85,36 @@ async function run() {
         res.send(result);
     })
 
+    // to update a specific service
+    app.put('/service/update/:id', async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: ObjectId(id) };
+        const newService = req.body;
+        const option = { upsert : true};
+        const updatedService = {
+            $set:{
+                name: newService.name,
+                img: newService.img,
+                description: newService.description,
+                price: newService.price
+            }
+        }
+        const result = await serviceCollection.updateOne(query, updatedService, option);
+        res.send(result);
+    })
+
     // to post new services
     app.post('/services', async (req, res) => {
         const service = req.body;
         const result = await serviceCollection.insertOne(service);
+        res.send(result);
+    })
+
+    // to delete a service
+    app.delete('/services/:id', async(req, res)=>{
+        const id = req.params.id;
+        const query = { _id: ObjectId(id)};
+        const result = serviceCollection.deleteOne(query);
         res.send(result);
     })
 
@@ -162,7 +188,7 @@ async function run() {
     // load all reviews by users
     app.get('/reviews', async (req, res) => {
         const query = {};
-        const cursor = reviewCollection.find(query).sort({ createdAt: -1 });
+        const cursor = reviewCollection.find(query);
         const reviews = await cursor.toArray();
         res.send(reviews);
     })
@@ -197,6 +223,20 @@ async function run() {
             }
         }
         const result = await reviewCollection.updateOne(query, updatedReview, option);
+        res.send(result);
+    })
+
+    // temp api to insert extra data
+    app.put('/services/update', async(req, res)=>{
+        const query = {};
+        const slot = ["09:00 AM - 11:00 AM", "11:00 AM - 1:00 PM", "02:00 PM - 04:00 PM", "04:00 PM - 06:00 PM"];
+        const option = {upsert : true};
+        const updatedService = {
+            $set:{
+                slots: slot
+            }
+        }
+        const result = await serviceCollection.updateMany(query, updatedService, option);
         res.send(result);
     })
 
